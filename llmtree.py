@@ -15,6 +15,9 @@ from mlx.nn import Module
 from mlx_lm import load
 from mlx_lm.generate import BatchGenerator
 from mlx_lm.tokenizer_utils import TokenizerWrapper
+from rich.console import Console
+from rich.live import Live
+from rich.table import Table
 
 
 @dataclass
@@ -51,7 +54,7 @@ def response_to_output_tokens(
     top_probs = mx.reshape(top_probs, (-1,)).tolist()
 
     output_tokens = []
-    for token_id, prob in zip(top_indices, top_probs):
+    for token_id, prob in zip(top_indices, top_probs): # type: ignore[call-arg]
         output_tokens.append(OutputToken(token=token_id, prob=prob))
     return output_tokens
 
@@ -72,8 +75,14 @@ def walk(model: Module, tokenizer: TokenizerWrapper, prompt: list[int]) -> Gener
         return uids_to_remove
 
 
+    global stats
     responses: list[BatchGenerator.Response]
     while responses := gen.next():
+        try:
+            stats = gen.stats()
+        except Exception:
+            pass
+
         for r in responses:
             if r.uid in prune_branches():
                 continue
@@ -104,31 +113,60 @@ def walk(model: Module, tokenizer: TokenizerWrapper, prompt: list[int]) -> Gener
 
 
 
+def render_branches(
+    tokenizer: TokenizerWrapper, branches: list[Branch]
+) -> Table:
+    table = Table(expand=True)
+    table.add_column("#", justify="right", no_wrap=True, width=3)
+    table.add_column("Prob.", justify="right", no_wrap=True, width=8)
+    table.add_column("Answer", ratio=1)
+
+    for i in range(args.n):
+        if i >= len(branches):
+            table.add_row(str(i + 1), "", "")
+            break
+
+        branch = branches[i]
+        answer_text =  tokenizer.decode(branch.answer, skip_special_tokens=True)  # type: ignore[call-arg]
+        probability_text = f"{branch.probability * 100:6.2f}%"
+        table.add_row(str(i + 1), probability_text, answer_text)
+
+    return table
+
+
 def main() -> None:
     load_resp = load(args.model)
     model = load_resp[0]
     tokenizer = load_resp[1]
 
-    prompt = tokenizer.apply_chat_template(
+    prompt = tokenizer.apply_chat_template( # type: ignore[call-arg]
         [{"role": "user", "content": args.prompt}],
         add_generation_prompt=True,
     )
 
-    branches = []
-    for branch in walk(model, tokenizer, prompt):
-        if branch.finish_reason == "low_probability":
-            continue
+    branches: list[Branch] = []
+    console = Console()
 
-        branches.append(branch)
-        branches.sort(key=lambda branch: branch.probability, reverse=True)
+    with Live(
+        render_branches(tokenizer, branches),
+        console=console,
+        refresh_per_second=8,
+        transient=False,
+    ) as live:
+        for branch in walk(model, tokenizer, prompt):
+            if branch.finish_reason == "low_probability":
+                continue
 
+            branches.append(branch)
+            branches.sort(key=lambda branch: branch.probability, reverse=True)
+            live.update(render_branches(tokenizer, branches))
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-p", "--prompt", default="What is 2+2?", help="Prompt to score")
 parser.add_argument("-m", "--model", default="mlx-community/Llama-3.2-1B-Instruct-4bit")
-parser.add_argument("-n", default=20, type=int, help="Number of answers to show")
+parser.add_argument("-n", default=10, type=int, help="Number of answers to show")
 parser.add_argument("--min-probability", type=float, default=0.0001)
-parser.add_argument("--topk", default=50)
+parser.add_argument("--topk", default=50, type=int)
 args = parser.parse_args()
 
 main()
