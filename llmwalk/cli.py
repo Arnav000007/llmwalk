@@ -73,6 +73,44 @@ def _clone_prompt_cache(cache: list[KVCache]) -> list[KVCache]:
     return [_clone_kv_cache(c) for c in cache]
 
 
+def _infer_num_layers(model: Module) -> int | None:
+    for obj in (model, getattr(model, "model", None)):
+        if obj is None:
+            continue
+
+        n = getattr(obj, "num_hidden_layers", None)
+        if isinstance(n, int) and n > 0:
+            return n
+
+        layers = getattr(obj, "layers", None)
+        if layers is None:
+            continue
+        try:
+            n_layers = len(layers)  # type: ignore[arg-type]
+        except TypeError:
+            n_layers = None
+        if isinstance(n_layers, int) and n_layers > 0:
+            return n_layers
+
+    return None
+
+
+def _make_kv_cache(model: Module) -> list[KVCache] | None:
+    make_cache = getattr(model, "make_cache", None)
+    if callable(make_cache):
+        cache = make_cache()
+        if cache is None:
+            return None
+        if isinstance(cache, list):
+            return cache
+        return list(cache)
+
+    n_layers = _infer_num_layers(model)
+    if n_layers is None:
+        return None
+    return [KVCache() for _ in range(n_layers)]
+
+
 def _top_tokens_from_logprobs(logprobs: mx.array) -> list[OutputToken]:
     vocab = int(logprobs.shape[0])
     k = min(args.top_k, vocab)
@@ -135,7 +173,7 @@ class PromptTreeSearch:
     def decode_token(self, token_id: int) -> str:
         return self.tokenizer.decode([token_id], skip_special_tokens=True)  # type: ignore[call-arg]
 
-    def _run_model(self, cache: list[KVCache], input_ids: list[int]) -> mx.array:
+    def _run_model(self, cache: list[KVCache] | None, input_ids: list[int]) -> mx.array:
         inputs = mx.array([input_ids], mx.int32)
         logits = self.model(inputs, cache=cache)[:, -1, :]
         logits = logits.astype(mx.float32)
@@ -188,13 +226,16 @@ class PromptTreeSearch:
             return
 
         if branch.token is None:  # root branch
-            cache_after = self.model.make_cache() if hasattr(self.model, "make_cache") else []  # type: ignore[assignment]
+            cache_after = _make_kv_cache(self.model)
             logprobs = self._run_model(cache_after, self.prompt)
         else:
             if branch.cache is None:
-                raise RuntimeError("Branch cache missing while expanding leaf")
-            cache_after = _clone_prompt_cache(branch.cache)
-            logprobs = self._run_model(cache_after, [branch.token.token])
+                input_ids = self.prompt + [t.token for t in branch.answer_tokens()]
+                cache_after = None
+                logprobs = self._run_model(cache_after, input_ids)
+            else:
+                cache_after = _clone_prompt_cache(branch.cache)
+                logprobs = self._run_model(cache_after, [branch.token.token])
 
         self.branches.remove(branch)
 
