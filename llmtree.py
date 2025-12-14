@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import argparse
+import colorsys
 import time
 from dataclasses import dataclass
 from datetime import datetime
@@ -21,6 +22,7 @@ from mlx_lm.tokenizer_utils import TokenizerWrapper
 from rich.console import Console, Group
 from rich.live import Live
 from rich.panel import Panel
+from rich.style import Style
 from rich.table import Table
 from rich.text import Text
 from sortedcontainers import SortedList
@@ -90,6 +92,7 @@ class PromptTreeSearch:
     tokenizer: TokenizerWrapper
     prompt: list[int]
     signal: StopSignal
+    _decoded_token_cache: dict[int, str]
 
     tokens: int = 0
     pruned: int = 0
@@ -105,6 +108,7 @@ class PromptTreeSearch:
         self.prompt = prompt
         self.gen = BatchGenerator(model)
         self.signal = signal
+        self._decoded_token_cache = {}
 
         uid = self.gen.insert([prompt], max_tokens=1)[0]
 
@@ -113,6 +117,14 @@ class PromptTreeSearch:
         self._branch_lookup[uid] = root
         self.branches = SortedList(key=lambda b: -b.probability)
         self.branches.add(root)
+
+    def decode_token(self, token_id: int) -> str:
+        cached = self._decoded_token_cache.get(token_id)
+        if cached is not None:
+            return cached
+        decoded = self.tokenizer.decode([token_id], skip_special_tokens=True)  # type: ignore[call-arg]
+        self._decoded_token_cache[token_id] = decoded
+        return decoded
 
 
 
@@ -191,6 +203,10 @@ class PromptTreeSearch:
         thread.start()
         return thread
 
+def style_for_token_probability(prob: float) -> Style:
+    r, g, b = colorsys.hsv_to_rgb((120 * prob) / 360.0, 0.85, 0.95)
+    return Style(color=f"rgb({int(r * 255)},{int(g * 255)},{int(b * 255)})")
+
 def render_branches(walker: PromptTreeSearch) -> Table:
     table = Table(expand=True)
     table.add_column("#", justify="right", no_wrap=True, width=3)
@@ -204,7 +220,12 @@ def render_branches(walker: PromptTreeSearch) -> Table:
             continue
 
         branch = walker.branches[i]
-        answer_text =  walker.tokenizer.decode([b.token for b in branch.answer], skip_special_tokens=True)  # type: ignore[call-arg]
+        answer_text = Text()
+        for tok in branch.answer:
+            piece = walker.decode_token(tok.token)
+            if not piece:
+                continue
+            answer_text.append(piece, style=style_for_token_probability(tok.prob))
         probability_text = f"{branch.probability * 100:6.2f}%"
         finished = "✓" if branch.finish_reason is not None else ""
         table.add_row(str(i + 1), finished, probability_text, answer_text)
