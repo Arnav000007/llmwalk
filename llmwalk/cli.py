@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import argparse
+import csv
 import heapq
+import io
+import json
 import sys
 import time
 from dataclasses import dataclass
@@ -103,7 +106,11 @@ def _make_kv_cache(model: Module) -> list[KVCache] | None:
             return None
         if isinstance(cache, list):
             return cache
-        return list(cache)
+        from collections.abc import Iterable
+
+        if isinstance(cache, Iterable):
+            return list(cache)
+        return None
 
     n_layers = _infer_num_layers(model)
     if n_layers is None:
@@ -127,8 +134,8 @@ def _top_tokens_from_logprobs(logprobs: mx.array) -> list[OutputToken]:
         probs = mx.exp(mx.take(logprobs, sorted_indices) / args.temperature - lse)
 
     mx.eval(sorted_indices, probs)
-    token_ids: list[int] = sorted_indices.astype(mx.int64).tolist()
-    token_probs: list[float] = mx.reshape(probs, (-1,)).tolist()
+    token_ids = list(sorted_indices.astype(mx.int64).tolist())  # type: ignore[arg-type]
+    token_probs = list(mx.reshape(probs, (-1,)).tolist())  # type: ignore[arg-type]
 
     output_tokens: list[OutputToken] = []
     cum_prob = 0.0
@@ -146,7 +153,7 @@ class PromptTreeSearch:
     tokenizer: TokenizerWrapper
     prompt: list[int]
     _frontier: list[tuple[float, int, Branch]]
-    _finished_eos: SortedList[Branch]
+    _finished_eos: SortedList  # SortedList[Branch]
     _heap_counter: int = 0
     _stopped: bool = False
 
@@ -157,7 +164,9 @@ class PromptTreeSearch:
     _start: datetime | None = None
     _end: datetime | None = None
 
-    def __init__(self, model: Module, tokenizer: TokenizerWrapper, prompt: list[int]) -> None:
+    def __init__(
+        self, model: Module, tokenizer: TokenizerWrapper, prompt: list[int]
+    ) -> None:
         self.model = model
         self.tokenizer = tokenizer
         self.prompt = prompt
@@ -189,7 +198,9 @@ class PromptTreeSearch:
 
     def _push_frontier(self, branch: Branch) -> None:
         self._heap_counter += 1
-        heapq.heappush(self._frontier, (-branch.probability, self._heap_counter, branch))
+        heapq.heappush(
+            self._frontier, (-branch.probability, self._heap_counter, branch)
+        )
 
     def _update_low_watermark(self) -> None:
         if len(self._finished_eos) < args.n:
@@ -383,6 +394,43 @@ def render_view(walker: PromptTreeSearch) -> Group:
     )
 
 
+def format_results_json(walker: PromptTreeSearch) -> str:
+    branches = walker.top_branches(args.n)
+    results = []
+    for branch in branches:
+        tokens = []
+        for tok in branch.answer_tokens():
+            tokens.append(
+                {
+                    "token": walker.decode_token(tok.token),
+                    "probability": tok.prob,
+                }
+            )
+        answer_text = "".join(t["token"] for t in tokens)
+        results.append(
+            {
+                "answer": answer_text,
+                "probability": branch.probability,
+                "finish_reason": branch.finish_reason,
+                "tokens": tokens,
+            }
+        )
+    return json.dumps(results, indent=2)
+
+
+def format_results_csv(walker: PromptTreeSearch) -> str:
+    branches = walker.top_branches(args.n)
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(["answer", "probability", "finish_reason"])
+    for branch in branches:
+        answer_text = "".join(
+            walker.decode_token(tok.token) for tok in branch.answer_tokens()
+        )
+        writer.writerow([answer_text, branch.probability, branch.finish_reason or ""])
+    return output.getvalue()
+
+
 def run() -> None:
     load_resp = load(args.model)
     model = load_resp[0]
@@ -393,30 +441,47 @@ def run() -> None:
         add_generation_prompt=True,
     )
 
-    console = Console()
-
     walker = PromptTreeSearch(model, tokenizer, prompt)
     walker.begin()
 
-    try:
-        with Live(console=console, transient=False) as live:
-            interval = max(0.1, args.stats_interval)
-            next_render = time.monotonic()
-            live.update(render_view(walker))
+    if args.format:
+        # Machine-readable output: no interactive display
+        try:
             while not walker.should_stop():
                 walker.step()
-                if args.stats_interval > 0 and time.monotonic() >= next_render:
-                    live.update(render_view(walker))
-                    next_render = time.monotonic() + interval
-            live.update(render_view(walker))
-    except KeyboardInterrupt:
-        walker.stop()
+        except KeyboardInterrupt:
+            walker.stop()
+
+        if args.format == "json":
+            print(format_results_json(walker))
+        elif args.format == "csv":
+            print(format_results_csv(walker), end="")
+    else:
+        # Interactive display
+        console = Console()
+        try:
+            with Live(console=console, transient=False) as live:
+                interval = max(0.1, args.stats_interval)
+                next_render = time.monotonic()
+                live.update(render_view(walker))
+                while not walker.should_stop():
+                    walker.step()
+                    if args.stats_interval > 0 and time.monotonic() >= next_render:
+                        live.update(render_view(walker))
+                        next_render = time.monotonic() + interval
+                live.update(render_view(walker))
+        except KeyboardInterrupt:
+            walker.stop()
 
 
 def parse_args(argv: list[str] | None) -> argparse.Namespace:
     parser = argparse.ArgumentParser()
-    parser.add_argument("-p", "--prompt", default="What is 2+2?", help="Prompt to score")
-    parser.add_argument("-m", "--model", default="mlx-community/Llama-3.2-1B-Instruct-4bit")
+    parser.add_argument(
+        "-p", "--prompt", default="What is 2+2?", help="Prompt to score"
+    )
+    parser.add_argument(
+        "-m", "--model", default="mlx-community/Llama-3.2-1B-Instruct-4bit"
+    )
     parser.add_argument("-n", default=10, type=int, help="Number of answers to show")
     parser.add_argument("--min-probability", type=float, default=0.0001)
     parser.add_argument("--top-k", dest="top_k", default=50, type=int)
@@ -427,12 +492,20 @@ def parse_args(argv: list[str] | None) -> argparse.Namespace:
         type=float,
         help="Nucleus sampling threshold (0 < p <= 1)",
     )
-    parser.add_argument("--temperature", type=float, default=1.0, help="Softmax temperature (> 0)")
+    parser.add_argument(
+        "--temperature", type=float, default=1.0, help="Softmax temperature (> 0)"
+    )
     parser.add_argument(
         "--stats-interval",
         type=float,
         default=0.1,
         help="Seconds between live stats bar updates (<=0 disables)",
+    )
+    parser.add_argument(
+        "--format",
+        choices=["csv", "json"],
+        default=None,
+        help="Output format for machine-readable output (disables interactive display)",
     )
 
     raw = list(sys.argv[1:] if argv is None else argv)

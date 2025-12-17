@@ -30,3 +30,33 @@ to know for sure it has found the `-n` most likely branches.
 - `--top-p FLOAT`: Nucleus cutoff applied *within the top-k tokens* at each step (keep adding tokens until cumulative probability ≥ `p`).
 - `--temperature FLOAT`: Softmax temperature applied when computing per-step probabilities (`1.0` is the model distribution; must be `> 0`).
 - `--stats-interval SECONDS`: How often to refresh the live view (`<= 0` disables periodic refresh; still renders at start/end).
+- `--format {csv,json}`: Output format for machine-readable output. When specified, disables the interactive display and prints results to stdout when the job completes.
+
+## Machine-readable output
+
+Use `--format` to get structured output for scripting or further processing:
+
+```bash
+# JSON output
+uvx llmwalk -p "What is 2+2?" --format json
+
+# CSV output
+uvx llmwalk -p "What is 2+2?" --format csv
+```
+
+JSON output includes detailed token-level information:
+
+```json
+[
+  {
+    "answer": "4",
+    "probability": 0.95,
+    "finish_reason": "eos_token",
+    "tokens": [
+      {"token": "4", "probability": 0.95}
+    ]
+  }
+]
+```
+
+CSV output provides a simpler tabular format with columns: `answer`, `probability`, `finish_reason`.
