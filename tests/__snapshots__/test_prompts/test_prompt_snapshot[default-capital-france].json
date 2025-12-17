@@ -1,0 +1,17 @@
+[
+  {
+    "answer": "Paris",
+    "finish_reason": "eos_token",
+    "probability": 0.5851167404268445,
+    "tokens": [
+      {
+        "probability": 0.9878690838813782,
+        "token": "Paris"
+      },
+      {
+        "probability": 0.5923019051551819,
+        "token": ""
+      }
+    ]
+  }
+]

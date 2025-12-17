@@ -75,6 +75,17 @@ def render_probability_legend() -> Text:
 _PROBABILITY_LEGEND = render_probability_legend()
 
 
+def detokenize_answer(walker: PromptTreeSearch, token_ids: list[int]) -> str:
+    detokenizer = walker.tokenizer.detokenizer
+    detokenizer.reset()
+    for token_id in token_ids:
+        if token_id in walker.tokenizer.eos_token_ids:
+            continue
+        detokenizer.add_token(token_id)
+    detokenizer.finalize()
+    return detokenizer.text
+
+
 def render_branches(walker: PromptTreeSearch) -> Table:
     table = Table(expand=True, show_header=False, show_edge=False)
     table.add_column("Prob.", justify="right", no_wrap=True, width=8)
@@ -163,7 +174,9 @@ def format_results_json(walker: PromptTreeSearch) -> str:
                     "probability": tok.prob,
                 }
             )
-        answer_text = "".join(t["token"] for t in tokens)
+        answer_text = detokenize_answer(
+            walker, [tok.token for tok in branch.answer_tokens()]
+        )
         results.append(
             {
                 "answer": answer_text,
@@ -181,8 +194,8 @@ def format_results_csv(walker: PromptTreeSearch) -> str:
     writer = csv.writer(output)
     writer.writerow(["answer", "probability", "finish_reason"])
     for branch in branches:
-        answer_text = "".join(
-            walker.decode_token(tok.token) for tok in branch.answer_tokens()
+        answer_text = detokenize_answer(
+            walker, [tok.token for tok in branch.answer_tokens()]
         )
         writer.writerow([answer_text, branch.probability, branch.finish_reason or ""])
     return output.getvalue()
@@ -192,6 +205,8 @@ def run() -> None:
     load_resp = load(args.model)
     model = load_resp[0]
     tokenizer = load_resp[1]
+
+    model.eval()
 
     prompt = tokenizer.apply_chat_template(  # type: ignore[call-arg]
         [{"role": "user", "content": args.prompt}],

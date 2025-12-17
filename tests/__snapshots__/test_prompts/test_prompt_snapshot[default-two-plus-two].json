@@ -1,0 +1,21 @@
+[
+  {
+    "answer": "Four.",
+    "finish_reason": "eos_token",
+    "probability": 0.4089153564667007,
+    "tokens": [
+      {
+        "probability": 0.585510790348053,
+        "token": "Four"
+      },
+      {
+        "probability": 0.6984281539916992,
+        "token": "."
+      },
+      {
+        "probability": 0.9999465346336365,
+        "token": ""
+      }
+    ]
+  }
+]

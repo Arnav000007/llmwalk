@@ -1,0 +1,247 @@
+[
+  {
+    "answer": "Paris (not a typo, Paris is the capital city of France)",
+    "finish_reason": "eos_token",
+    "probability": 0.002477645966623216,
+    "tokens": [
+      {
+        "probability": 0.9997292160987854,
+        "token": "Paris"
+      },
+      {
+        "probability": 0.7607424259185791,
+        "token": "("
+      },
+      {
+        "probability": 0.19734331965446472,
+        "token": "not"
+      },
+      {
+        "probability": 0.8402746319770813,
+        "token": "a"
+      },
+      {
+        "probability": 0.5315064191818237,
+        "token": "typ"
+      },
+      {
+        "probability": 0.9996547698974609,
+        "token": "o"
+      },
+      {
+        "probability": 0.9821969866752625,
+        "token": ","
+      },
+      {
+        "probability": 0.7557774782180786,
+        "token": "Paris"
+      },
+      {
+        "probability": 0.9985285401344299,
+        "token": "is"
+      },
+      {
+        "probability": 0.7320148348808289,
+        "token": "the"
+      },
+      {
+        "probability": 0.670669436454773,
+        "token": "capital"
+      },
+      {
+        "probability": 0.5634616017341614,
+        "token": "city"
+      },
+      {
+        "probability": 0.46561211347579956,
+        "token": "of"
+      },
+      {
+        "probability": 0.9999542236328125,
+        "token": "France"
+      },
+      {
+        "probability": 0.3925216794013977,
+        "token": ")"
+      },
+      {
+        "probability": 0.9867410659790039,
+        "token": ""
+      }
+    ]
+  },
+  {
+    "answer": "Paris (not a typo, Paris is the capital city, not the capital state)",
+    "finish_reason": "eos_token",
+    "probability": 0.000701938764540693,
+    "tokens": [
+      {
+        "probability": 0.9997292160987854,
+        "token": "Paris"
+      },
+      {
+        "probability": 0.7607424259185791,
+        "token": "("
+      },
+      {
+        "probability": 0.19734331965446472,
+        "token": "not"
+      },
+      {
+        "probability": 0.8402746319770813,
+        "token": "a"
+      },
+      {
+        "probability": 0.5315064191818237,
+        "token": "typ"
+      },
+      {
+        "probability": 0.9996547698974609,
+        "token": "o"
+      },
+      {
+        "probability": 0.9821969866752625,
+        "token": ","
+      },
+      {
+        "probability": 0.7557774782180786,
+        "token": "Paris"
+      },
+      {
+        "probability": 0.9985285401344299,
+        "token": "is"
+      },
+      {
+        "probability": 0.7320148348808289,
+        "token": "the"
+      },
+      {
+        "probability": 0.670669436454773,
+        "token": "capital"
+      },
+      {
+        "probability": 0.5634616017341614,
+        "token": "city"
+      },
+      {
+        "probability": 0.48795729875564575,
+        "token": ","
+      },
+      {
+        "probability": 0.5095872282981873,
+        "token": "not"
+      },
+      {
+        "probability": 0.9860091805458069,
+        "token": "the"
+      },
+      {
+        "probability": 0.8910145163536072,
+        "token": "capital"
+      },
+      {
+        "probability": 0.486347496509552,
+        "token": "state"
+      },
+      {
+        "probability": 0.4830770790576935,
+        "token": ")"
+      },
+      {
+        "probability": 0.9954100251197815,
+        "token": ""
+      }
+    ]
+  },
+  {
+    "answer": "Paris (not a typo, Paris is the capital city, not the capital state or province)",
+    "finish_reason": "eos_token",
+    "probability": 0.00013999200194631084,
+    "tokens": [
+      {
+        "probability": 0.9997292160987854,
+        "token": "Paris"
+      },
+      {
+        "probability": 0.7607424259185791,
+        "token": "("
+      },
+      {
+        "probability": 0.19734331965446472,
+        "token": "not"
+      },
+      {
+        "probability": 0.8402746319770813,
+        "token": "a"
+      },
+      {
+        "probability": 0.5315064191818237,
+        "token": "typ"
+      },
+      {
+        "probability": 0.9996547698974609,
+        "token": "o"
+      },
+      {
+        "probability": 0.9821969866752625,
+        "token": ","
+      },
+      {
+        "probability": 0.7557774782180786,
+        "token": "Paris"
+      },
+      {
+        "probability": 0.9985285401344299,
+        "token": "is"
+      },
+      {
+        "probability": 0.7320148348808289,
+        "token": "the"
+      },
+      {
+        "probability": 0.670669436454773,
+        "token": "capital"
+      },
+      {
+        "probability": 0.5634616017341614,
+        "token": "city"
+      },
+      {
+        "probability": 0.48795729875564575,
+        "token": ","
+      },
+      {
+        "probability": 0.5095872282981873,
+        "token": "not"
+      },
+      {
+        "probability": 0.9860091805458069,
+        "token": "the"
+      },
+      {
+        "probability": 0.8910145163536072,
+        "token": "capital"
+      },
+      {
+        "probability": 0.486347496509552,
+        "token": "state"
+      },
+      {
+        "probability": 0.19215478003025055,
+        "token": "or"
+      },
+      {
+        "probability": 0.7145478129386902,
+        "token": "province"
+      },
+      {
+        "probability": 0.7032752633094788,
+        "token": ")"
+      },
+      {
+        "probability": 0.99314945936203,
+        "token": ""
+      }
+    ]
+  }
+]

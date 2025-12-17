@@ -31,3 +31,11 @@ exclude = [
 
 [tool.hatch.build.targets.wheel]
 packages = ["llmwalk"]
+
+[tool.pytest.ini_options]
+filterwarnings = [
+  # Noise from the sentencepiece SWIG extension when running with Mistral tokenizers.
+  "ignore:.*SwigPyPacked.*:DeprecationWarning",
+  "ignore:.*SwigPyObject.*:DeprecationWarning",
+  "ignore:.*swigvarlink.*:DeprecationWarning",
+]

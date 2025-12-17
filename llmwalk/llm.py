@@ -4,7 +4,6 @@ import heapq
 from collections.abc import Iterable
 from dataclasses import dataclass
 from datetime import datetime
-from functools import lru_cache
 
 import mlx.core as mx
 from mlx.nn import Module
@@ -162,15 +161,20 @@ class PromptTreeSearch:
         self.config = config or SearchConfig()
         self._frontier = []
         self._finished_eos = SortedList(key=lambda b: -b.probability)
+        self._decode_cache: dict[int, str] = {}
 
         root = Branch(parent=None, token=None)
         self.branches = SortedList(key=lambda b: -b.probability)
         self.branches.add(root)
         self._push_frontier(root)
 
-    @lru_cache(maxsize=65536)
     def decode_token(self, token_id: int) -> str:
-        return self.tokenizer.decode([token_id], skip_special_tokens=True)  # type: ignore[call-arg]
+        cached = self._decode_cache.get(token_id)
+        if cached is not None:
+            return cached
+        decoded = self.tokenizer.decode([token_id], skip_special_tokens=True)  # type: ignore[call-arg]
+        self._decode_cache[token_id] = decoded
+        return decoded
 
     def _run_model(self, cache: list[KVCache] | None, input_ids: list[int]) -> mx.array:
         self.tokens += 1
