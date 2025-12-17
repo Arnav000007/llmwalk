@@ -88,12 +88,24 @@ def render_branches(walker: PromptTreeSearch) -> Table:
 
         branch = branches[i]
         answer_text = Text()
+        detokenizer = walker.tokenizer.detokenizer
+        detokenizer.reset()
+        last_style: Style | None = None
         for tok in branch.answer_tokens():
-            piece = walker.decode_token(tok.token)
+            if tok.token in walker.tokenizer.eos_token_ids:
+                continue
+            detokenizer.add_token(tok.token)
+            piece = detokenizer.last_segment
             if not piece:
                 continue
             piece = piece.replace("\n", "\\n")
-            answer_text.append(piece, style=style_for_token_probability(tok.prob))
+            last_style = style_for_token_probability(tok.prob)
+            answer_text.append(piece, style=last_style)
+        detokenizer.finalize()
+        piece = detokenizer.last_segment
+        if piece:
+            piece = piece.replace("\n", "\\n")
+            answer_text.append(piece, style=last_style)
 
         status: Text
         if branch.finish_reason == "eos_token":
