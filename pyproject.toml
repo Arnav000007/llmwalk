@@ -9,9 +9,10 @@ description = "Explore the answer-space for any prompt and any MLX-supported mod
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-  "mlx-lm==0.28.4",
+  "mlx-lm==0.29.1",
   "rich==14.2.0",
   "sortedcontainers==2.4.0",
+  "transformers===4.57.3",
 ]
 
 [project.scripts]
